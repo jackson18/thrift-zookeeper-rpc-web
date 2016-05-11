@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.demo.dao.StatisticDao">
+
+	<resultMap type="Statistic" id="serviceResultMap">
+        <result property="service" column="service"/>
+    </resultMap>
+	<resultMap type="Statistic" id="methodResultMap">
+        <result property="method" column="method"/>
+    </resultMap>
+    
+    <insert id="addBatch" useGeneratedKeys="true" parameterType="java.util.List">  
+		    INSERT INTO 
+		    	monitor_statistic (service,method,time,concurrent,createTime,isError)   
+		    VALUES  
+		    <foreach collection="list" item="item" index="index" separator="," >  
+		        (#{item.service}, #{item.method}, #{item.time}, #{item.concurrent}, #{item.createTime}, #{item.isError})
+		    </foreach>  
+	</insert>  
+    
+    <insert id="insert" parameterType="Statistic">
+    	<![CDATA[
+		    INSERT INTO 
+		    	monitor_statistic (service,method,time,concurrent,createTime,isError)
+		    VALUES (#{service}, #{method}, #{time}, #{concurrent}, #{createTime}, #{isError})
+    	]]>
+    </insert>
+	
+	<select id="getStatisticByQuery" resultType="Statistic">
+		<![CDATA[
+			SELECT
+				*
+			FROM
+				monitor_statistic
+			WHERE
+				createTime >= str_to_date(#{startTime}, '%Y-%m-%d %H:%i:%s')
+			AND 
+				createTime <= str_to_date(#{endTime}, '%Y-%m-%d %H:%i:%s')
+			AND
+				service = #{service}
+			AND
+				method = #{method}
+		]]>
+	</select>
+	
+	<select id="getServices" resultMap="serviceResultMap">
+		<![CDATA[
+			SELECT
+				service
+			FROM
+				monitor_statistic
+			WHERE
+				createTime >= str_to_date(#{startTime}, '%Y-%m-%d %H:%i:%s')
+			AND 
+				createTime <= str_to_date(#{endTime}, '%Y-%m-%d %H:%i:%s')
+			GROUP BY
+				service
+		]]>
+	</select>
+	
+	<select id="getMethods" resultMap="methodResultMap">
+		<![CDATA[
+			SELECT
+				method
+			FROM
+				monitor_statistic
+			WHERE
+				createTime >= str_to_date(#{startTime}, '%Y-%m-%d %H:%i:%s')
+			AND 
+				createTime <= str_to_date(#{endTime}, '%Y-%m-%d %H:%i:%s')
+			AND
+				service = #{service}
+			GROUP BY
+				method
+		]]>
+	</select>
+	
+	<delete id="deleteByDay">
+		<![CDATA[
+            DELETE FROM
+            	monitor_statistic
+            WHERE 
+            	DATE(createTime) <= DATE_SUB(DATE(NOW()),INTERVAL 3 DAY)
+        ]]>
+	</delete>
+	
+</mapper>
